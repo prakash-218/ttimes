@@ -1,444 +1,258 @@
-<html>
-    <head>
-        <title>TTimes</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <style>
-            :root {
-                --bg-color: #f7f9fc;
-                --text-primary: #1a1a1a;
-                --text-secondary: #666;
-                --card-bg: #ffffff;
-                --accent-color: #007aff;
-                --hurry-bg: #fff1f0;
-                --hurry-text: #e02d2d;
-                --border-radius: 12px;
-                --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
-                --yellow: rgba(238, 222, 179, 0.2);
-                --green: #e6f3ec;
-                --blue: rgba(0, 122, 255, 0.2);
-                --red: rgba(255, 59, 48, 0.2);
-                --silver: rgba(142, 142, 147, 0.2);
-                --orange: rgba(255, 149, 0, 0.2);
-            }
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Boston Commute Dashboard</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;900&display=swap" rel="stylesheet"/>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                        "card-dark": "#1e2936",
+                        "input-dark": "#233648",
+                        "mbta-red": "#DA291C",
+                        "mbta-green": "#00843D",
+                        "mbta-orange": "#ED8B00",
+                        "mbta-blue": "#003DA5",
+                        "mbta-purple": "#80276C",
+                        "mbta-yellow": "#FFC72C",
+                        "mbta-silver": "#6B7280",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+    <style>
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-white font-display min-h-screen flex flex-col overflow-x-hidden">
 
-            body { 
-                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-                background-color: var(--bg-color);
-                color: var(--text-primary);
-                max-width: 600px; 
-                margin: 0 auto; 
-                padding: 15px; 
-                line-height: 1.5;
-            }
+<!-- Top Navigation -->
+<header class="flex items-center justify-between whitespace-nowrap border-b border-solid border-slate-200 dark:border-[#233648] px-6 py-4 bg-white dark:bg-[#111a22] sticky top-0 z-50">
+    <div class="flex items-center gap-4">
 
-            h1 { 
-                display: flex; 
-                align-items: center; 
-                gap: 12px; 
-                font-size: 1.75em; 
-                margin-bottom: 25px; 
-                font-weight: 800;
-                letter-spacing: -0.5px;
-            }
-            
-            h1 svg { width: 32px; height: 32px; stroke-width: 2.5; }
-            
-            #loading { 
-                text-align: center; 
-                color: var(--text-secondary); 
-                margin-top: 50px; 
-                font-weight: 500;
-            }
-            
-            .group { 
-                background: var(--card-bg); 
-                margin-bottom: 20px; 
-                box-shadow: var(--shadow);
-                border-radius: var(--border-radius);
-                overflow: hidden;
-                display: flex;
-                transition: transform 0.2s ease;
-            }
+        <h2 class="text-slate-900 dark:text-white text-xl font-bold leading-tight tracking-tight text-center">TTimes</h2>
+    </div>
+    <div class="flex items-center gap-4">
+        <button id="themeToggle" class="bg-slate-200 dark:bg-[#233648] p-2 rounded-full hover:bg-slate-300 dark:hover:bg-[#2f455a] transition-colors">
+            <span class="material-symbols-outlined text-slate-700 dark:text-white dark:hidden">dark_mode</span>
+            <span class="material-symbols-outlined text-slate-700 dark:text-white hidden dark:block">light_mode</span>
+        </button>
+    </div>
+</header>
 
-            .group:active {
-                transform: scale(0.99);
-            }
-
-            .line-badge {
-                width: 50px;
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
-                align-items: center;
-                color: white;
-                font-weight: 800;
-                font-size: 1.25em;
-                flex-shrink: 0;
-            }
-
-            .destination-row {
-                display: flex;
-                flex-direction: column;
-                align-items: flex-start;
-                padding: 10px 0;
-                border-bottom: 1px solid #f0f0f0;
-                gap: 8px;
-            }
-            .destination-row:last-child { border-bottom: none; padding-bottom: 0; }
-            .destination-row:first-of-type { padding-top: 5px; }
-
-            @media (min-width: 400px) {
-                .destination-row {
-                    flex-direction: row;
-                    justify-content: space-between;
-                    align-items: center;
-                }
-            }
-
-            .dest-name {
-                font-weight: 600;
-                font-size: 1em;
-                white-space: normal;
-                margin-bottom: 2px;
-                color: var(--text-primary);
-            }
-            
-            .times {
-                display: flex;
-                gap: 8px;
-                flex-wrap: wrap;
-            }
-
-            .time-pill {
-                border: 1px solid #e5e5e5;
-                border-radius: 20px;
-                padding: 4px 10px;
-                font-size: 0.85em;
-                font-weight: 600;
-                display: flex;
-                align-items: center;
-                gap: 5px;
-                white-space: nowrap;
-                background: white;
-                cursor: pointer;
-                transition: all 0.2s;
-                color: var(--text-primary);
-                box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-            }
-            
-            .time-pill:hover {
-                background-color: #f8f9fa;
-                border-color: #d1d1d1;
-                transform: translateY(-1px);
-            }
-
-            .time-pill.hurry {
-                background-color: var(--hurry-bg);
-                color: var(--hurry-text);
-                border-color: rgba(224, 45, 45, 0.2);
-            }
-
-            .clock-icon {
-                width: 14px;
-                height: 14px;
-                stroke: currentColor;
-                stroke-width: 2;
-                fill: none;
-            }
-
-            .walking-info {
-                font-size: 0.85em;
-                color: var(--text-secondary);
-                margin-bottom: 12px;
-                display: flex;
-                align-items: center;
-                gap: 6px;
-                font-weight: 500;
-            }
-
-            .bracket-header {
-                padding: 20px 5px 8px;
-                font-weight: 700;
-                color: #8e8e93;
-                text-transform: uppercase;
-                font-size: 0.75em;
-                letter-spacing: 0.05em;
-                border-bottom: 2px solid transparent;
-            }
-
-            /* Modal Styles */
-            .modal {
-                display: none; 
-                position: fixed; 
-                z-index: 100; 
-                left: 0;
-                top: 0;
-                width: 100%; 
-                height: 100%; 
-                overflow: auto; 
-                background-color: rgba(0,0,0,0.3); 
-                backdrop-filter: blur(4px);
-                animation: fadeIn 0.2s;
-            }
-
-            @keyframes fadeIn {
-                from { opacity: 0; }
-                to { opacity: 1; }
-            }
-
-            .modal-content {
-                background-color: white;
-                margin: 20% auto; 
-                padding: 25px;
-                border: none;
-                width: 85%; 
-                max-width: 400px;
-                border-radius: 16px;
-                position: relative;
-                box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-                animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-            }
-
-            @keyframes slideUp {
-                from { transform: translateY(20px); opacity: 0; }
-                to { transform: translateY(0); opacity: 1; }
-            }
-
-            .close-modal {
-                color: #ccc;
-                position: absolute;
-                right: 20px;
-                top: 15px;
-                font-size: 24px;
-                font-weight: bold;
-                transition: color 0.2s;
-                background: #f5f5f5;
-                width: 32px;
-                height: 32px;
-                border-radius: 50%;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                line-height: 1;
-            }
-
-            .close-modal:hover {
-                color: #333;
-                background: #e5e5e5;
-                text-decoration: none;
-                cursor: pointer;
-            }
-            
-            #modalTitle {
-                margin-top: 0;
-                font-size: 1.25em;
-                margin-bottom: 20px;
-                padding-right: 30px;
-            }
-
-            .modal-detail-row {
-                margin: 12px 0;
-                border-bottom: 1px solid #f0f0f0;
-                padding-bottom: 12px;
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-            }
-            .modal-detail-row:last-child { border-bottom: none; }
-            
-            .modal-detail-label {
-                font-weight: 600;
-                color: var(--text-secondary);
-                font-size: 0.9em;
-            }
-            
-            .modal-value {
-                font-weight: 500;
-                text-align: right;
-            }
-
-            .bg-yellow {
-                background-color: var(--yellow);
-            }
-
-            .bg-green {
-                background-color: var(--green);
-            }
-
-            .bg-blue {
-                background-color: var(--blue);
-            }
-
-            .bg-red {
-                background-color: var(--red);
-            }
-
-            .bg-silver {
-                background-color: var(--silver);
-            }
-
-            .bg-orange {
-                background-color: var(--orange);
-            }
-
-            /* Control Bar */
-            .control-bar {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                padding: 10px 0;
-                margin-bottom: 15px;
-                border-bottom: 1px solid #eee;
-            }
-
-            .speed-toggle {
-                display: flex;
-                align-items: center;
-                gap: 8px;
-                font-size: 0.9em;
-            }
-
-            .speed-toggle label {
-                cursor: pointer;
-                display: flex;
-                align-items: center;
-                gap: 6px;
-            }
-
-            .toggle-switch {
-                position: relative;
-                width: 44px;
-                height: 24px;
-            }
-
-            .toggle-switch input {
-                opacity: 0;
-                width: 0;
-                height: 0;
-            }
-
-            .toggle-slider {
-                position: absolute;
-                cursor: pointer;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                background-color: #ccc;
-                transition: 0.3s;
-                border-radius: 24px;
-            }
-
-            .toggle-slider:before {
-                position: absolute;
-                content: "";
-                height: 18px;
-                width: 18px;
-                left: 3px;
-                bottom: 3px;
-                background-color: white;
-                transition: 0.3s;
-                border-radius: 50%;
-            }
-
-            input:checked + .toggle-slider {
-                background-color: var(--accent-color);
-            }
-
-            input:checked + .toggle-slider:before {
-                transform: translateX(20px);
-            }
-
-            .refresh-status {
-                font-size: 0.8em;
-                color: var(--text-secondary);
-                display: flex;
-                align-items: center;
-                gap: 5px;
-            }
-
-            .refresh-dot {
-                width: 8px;
-                height: 8px;
-                background: #34c759;
-                border-radius: 50%;
-                animation: pulse 2s infinite;
-            }
-
-            @keyframes pulse {
-                0%, 100% { opacity: 1; }
-                50% { opacity: 0.5; }
-            }
-
-            /* Pin Button */
-            .pin-btn {
-                position: absolute;
-                top: 8px;
-                right: 8px;
-                background: transparent;
-                border: none;
-                font-size: 1.2em;
-                cursor: pointer;
-                color: #ccc;
-                padding: 4px;
-                line-height: 1;
-                transition: all 0.2s;
-            }
-
-            .pin-btn:hover {
-                color: #ffc107;
-                transform: scale(1.1);
-            }
-
-            .pin-btn.pinned {
-                color: #ffc107;
-            }
-
-            .group-content {
-                flex-grow: 1;
-                padding: 16px;
-                min-width: 0;
-                position: relative;
-            }
-        </style>
-        <script src="/js/index.js"></script>
-    </head>
-    <body>
-        <h1>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
-                <line x1="8" y1="21" x2="16" y2="21"></line>
-                <line x1="12" y1="17" x2="12" y2="21"></line>
-            </svg>
-            T Times
-        </h1>
-
-        <div class="control-bar">
-            <div class="speed-toggle">
-                <label>
-                    <span>🚶</span>
-                    <div class="toggle-switch">
-                        <input type="checkbox" id="speedToggle">
-                        <span class="toggle-slider"></span>
-                    </div>
-                    <span>🏃</span>
+<div class="flex flex-1 justify-center p-4 md:p-8">
+    <div class="flex flex-col max-w-[1280px] w-full flex-1 gap-8">
+        
+        <!-- Page Heading + Context -->
+        <div class="flex flex-wrap justify-between items-end gap-4 border-b border-slate-200 dark:border-[#233648]/50 pb-6">
+            <div class="flex flex-col gap-2">
+                <h1 id="greeting" class="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white tracking-tight">Hello, Commuter</h1>
+                <div class="flex items-center gap-2 text-slate-500 dark:text-[#92adc9] text-sm font-medium">
+                    <span class="material-symbols-outlined text-lg">location_on</span>
+                    <span id="locationText">Detecting location...</span>
+                </div>
+            </div>
+            <!-- Pace Toggle -->
+            <div class="bg-slate-200 dark:bg-[#233648] p-1 rounded-full flex h-12 items-center">
+                <label class="cursor-pointer px-6 py-2 rounded-full flex items-center gap-2 transition-all has-[:checked]:bg-white dark:has-[:checked]:bg-[#111a22] has-[:checked]:shadow-sm has-[:checked]:text-primary text-slate-500 dark:text-[#92adc9]">
+                    <span class="material-symbols-outlined text-xl">directions_walk</span>
+                    <span class="font-semibold text-sm">Walk</span>
+                    <input checked id="paceWalk" class="hidden" name="pace" type="radio" value="walk"/>
+                </label>
+                <label class="cursor-pointer px-6 py-2 rounded-full flex items-center gap-2 transition-all has-[:checked]:bg-white dark:has-[:checked]:bg-[#111a22] has-[:checked]:shadow-sm has-[:checked]:text-primary text-slate-500 dark:text-[#92adc9]">
+                    <span class="material-symbols-outlined text-xl">directions_run</span>
+                    <span class="font-semibold text-sm">Run</span>
+                    <input id="paceRun" class="hidden" name="pace" type="radio" value="run"/>
                 </label>
             </div>
-            <div class="refresh-status">
-                <span class="refresh-dot"></span>
-                <span id="refreshStatus">Updating...</span>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loading" class="flex flex-col items-center justify-center py-20 gap-4">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+            <p class="text-slate-500 dark:text-[#92adc9]">Finding nearby transit options...</p>
+        </div>
+
+        <!-- Error State -->
+        <div id="error" class="hidden flex flex-col items-center justify-center py-20 gap-4 text-center">
+            <span class="material-symbols-outlined text-6xl text-red-500">error</span>
+            <p id="errorText" class="text-slate-500 dark:text-[#92adc9]">Something went wrong</p>
+            <button onclick="fetchCommuteData()" class="bg-primary text-white px-6 py-2 rounded-full font-medium hover:bg-blue-600 transition-colors">
+                Try Again
+            </button>
+        </div>
+
+        <!-- Pinned Routes Carousel -->
+        <section id="pinnedSection" class="hidden flex-col gap-4">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary">push_pin</span>
+                    Pinned Routes
+                </h3>
+            </div>
+            <div id="pinnedRoutes" class="flex overflow-x-auto gap-4 pb-4 no-scrollbar snap-x">
+            </div>
+        </section>
+
+        <!-- Main Dashboard Grid -->
+        <div id="mainGrid" class="hidden grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Column 1: Immediate Proximity -->
+            <div class="flex flex-col gap-4">
+                <div class="flex items-center gap-2 pb-2 border-b border-slate-200 dark:border-[#233648]">
+                    <span class="material-symbols-outlined text-mbta-green">timer</span>
+                    <h4 class="font-bold text-slate-900 dark:text-white">Immediate (&lt; 5m walk)</h4>
+                </div>
+                <div id="immediateCards" class="flex flex-col gap-4"></div>
+            </div>
+
+            <!-- Column 2: Nearby Proximity -->
+            <div class="flex flex-col gap-4">
+                <div class="flex items-center gap-2 pb-2 border-b border-slate-200 dark:border-[#233648]">
+                    <span class="material-symbols-outlined text-primary">directions_walk</span>
+                    <h4 class="font-bold text-slate-900 dark:text-white">Nearby (5-10m walk)</h4>
+                </div>
+                <div id="nearbyCards" class="flex flex-col gap-4"></div>
+            </div>
+
+            <!-- Column 3: Further Proximity -->
+            <div class="flex flex-col gap-4">
+                <div class="flex items-center gap-2 pb-2 border-b border-slate-200 dark:border-[#233648]">
+                    <span class="material-symbols-outlined text-slate-400">directions_bike</span>
+                    <h4 class="font-bold text-slate-900 dark:text-white">Further (10m+ walk)</h4>
+                </div>
+                <div id="furtherCards" class="flex flex-col gap-4"></div>
             </div>
         </div>
 
-        <div id="loading">Getting your commute...</div>
-        <div id="results"></div>
-
-        <div id="detailModal" class="modal">
-            <div class="modal-content">
-                <span class="close-modal">&times;</span>
-                <h2 id="modalTitle">Commute Details</h2>
-                <div id="modalBody"></div>
-            </div>
+        <!-- Empty State -->
+        <div id="emptyState" class="hidden flex flex-col items-center justify-center py-20 gap-4 text-center">
+            <span class="material-symbols-outlined text-6xl text-slate-300 dark:text-slate-600">train</span>
+            <p class="text-slate-500 dark:text-[#92adc9]">No upcoming transit options found nearby</p>
         </div>
-    </body>
+
+        <!-- Footer -->
+        <footer class="mt-8 mb-4 flex justify-between items-center text-xs text-slate-400 dark:text-slate-600">
+            <p>Data provided by MBTA Real-time API</p>
+            <button onclick="showAbout()" class="hover:text-primary transition-colors underline">About</button>
+            <p id="lastUpdated">Last updated: --</p>
+        </footer>
+    </div>
+</div>
+
+<!-- Detail Modal -->
+<div id="detailModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="relative w-full max-w-[420px] bg-background-light dark:bg-background-dark rounded-lg shadow-2xl flex flex-col max-h-[95vh] overflow-hidden ring-1 ring-white/10">
+        <!-- Header Actions -->
+        <div class="flex justify-between items-center px-6 pt-6 pb-2">
+            <div class="text-sm font-medium text-slate-500 dark:text-slate-400 tracking-wider uppercase">Details</div>
+            <button onclick="closeModal()" class="group p-2 -mr-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors rounded-full hover:bg-slate-200 dark:hover:bg-white/10">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <!-- Scrollable Content Area -->
+        <div id="modalBody" class="overflow-y-auto flex-1 px-6 pb-8"></div>
+    </div>
+</div>
+
+<!-- About Modal -->
+<div id="aboutModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="relative w-full max-w-[480px] bg-background-light dark:bg-background-dark rounded-lg shadow-2xl flex flex-col max-h-[95vh] overflow-hidden ring-1 ring-white/10">
+        <!-- Header -->
+        <div class="flex justify-between items-center px-6 pt-6 pb-2">
+            <div class="text-sm font-medium text-slate-500 dark:text-slate-400 tracking-wider uppercase">About</div>
+            <button onclick="closeAbout()" class="group p-2 -mr-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors rounded-full hover:bg-slate-200 dark:hover:bg-white/10">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <!-- Content -->
+        <div class="overflow-y-auto flex-1 px-6 pb-8">
+            <div class="flex flex-col items-center py-4">
+                <h1 class="text-slate-900 dark:text-white text-4xl font-black tracking-tight">TTimes</h1>
+                <p class="text-slate-500 dark:text-slate-400 text-sm mt-2">Boston Transit Departure Assistant</p>
+            </div>
+
+            <!-- APIs Used -->
+            <div class="bg-white dark:bg-[#1b2530] rounded-lg p-5 mt-4 border border-slate-200 dark:border-slate-700/50">
+                <h3 class="text-slate-900 dark:text-white font-bold mb-3 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary">api</span>
+                    Powered By
+                </h3>
+                <ul class="space-y-2 text-slate-600 dark:text-slate-300 text-sm">
+                    <li class="flex items-center gap-2">
+                        <span class="w-2 h-2 bg-primary rounded-full"></span>
+                        <strong>MBTA V3 API</strong> — Real-time transit data
+                    </li>
+                    <li class="flex items-center gap-2">
+                        <span class="w-2 h-2 bg-mbta-green rounded-full"></span>
+                        <strong>OpenRouteService API</strong> — Walking time calculations
+                    </li>
+                </ul>
+            </div>
+
+            <!-- How it works -->
+            <div class="bg-white dark:bg-[#1b2530] rounded-lg p-5 mt-4 border border-slate-200 dark:border-slate-700/50">
+                <h3 class="text-slate-900 dark:text-white font-bold mb-3 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-mbta-orange">calculate</span>
+                    How "Time to Leave" Works
+                </h3>
+                <div class="space-y-3 text-sm">
+                    <div class="flex items-center gap-3 text-slate-600 dark:text-slate-300">
+                        <div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">X</div>
+                        <span>Next departure is in <strong>X</strong> minutes</span>
+                    </div>
+                    <div class="flex items-center gap-3 text-slate-600 dark:text-slate-300">
+                        <div class="w-8 h-8 rounded-full bg-mbta-green/10 flex items-center justify-center text-mbta-green font-bold">Y</div>
+                        <span>It takes <strong>Y</strong> minutes to walk there</span>
+                    </div>
+                    <div class="border-t border-slate-200 dark:border-slate-700 pt-3 mt-3">
+                        <div class="flex items-center gap-3 text-slate-900 dark:text-white font-medium">
+                            <div class="w-8 h-8 rounded-full bg-mbta-red/10 flex items-center justify-center text-mbta-red font-bold">=</div>
+                            <span>Leave in <strong>X − Y</strong> minutes</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Credits -->
+            <div class="bg-white dark:bg-[#1b2530] rounded-lg p-5 mt-4 border border-slate-200 dark:border-slate-700/50">
+                <h3 class="text-slate-900 dark:text-white font-bold mb-3 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-mbta-purple">favorite</span>
+                    Credits
+                </h3>
+                <p class="text-slate-600 dark:text-slate-300 text-sm">
+                    This project is inspired by and a rewrite of 
+                    <a href="https://ttimes.boston" target="_blank" class="text-primary hover:underline font-medium">ttimes.boston</a>
+                </p>
+            </div>
+
+            <!-- Close button -->
+            <button onclick="closeAbout()" class="w-full mt-6 bg-primary hover:bg-blue-600 text-white font-bold py-3 rounded-full transition-colors">
+                Got it!
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- FAB Refresh -->
+<button onclick="fetchCommuteData()" class="fixed bottom-6 right-6 w-14 h-14 bg-primary text-white rounded-full shadow-2xl flex items-center justify-center hover:bg-blue-600 transition-all hover:scale-105 z-40">
+    <span class="material-symbols-outlined text-2xl">refresh</span>
+</button>
+
+<script src="/js/index.js"></script>
+</body>
 </html>
