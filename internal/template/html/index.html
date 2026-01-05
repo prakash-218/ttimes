@@ -3,191 +3,341 @@
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>Boston Commute Dashboard</title>
+    <title>TTimes</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;900&display=swap" rel="stylesheet"/>
-    <script>
+    <script id="tailwind-config">
         tailwind.config = {
             darkMode: "class",
             theme: {
                 extend: {
                     colors: {
-                        "primary": "#137fec",
-                        "background-light": "#f6f7f8",
-                        "background-dark": "#101922",
-                        "card-dark": "#1e2936",
-                        "input-dark": "#233648",
+                        "primary": "#eab308",
+                        "primary-light": "#fbbf24",
+                        "background-light": "#fafaf9",
+                        "background-dark": "#1a1a1a",
+                        "card-dark": "#262626",
+                        "card-light": "#ffffff",
+                        "surface-dark": "#404040",
                         "mbta-red": "#DA291C",
                         "mbta-green": "#00843D",
                         "mbta-orange": "#ED8B00",
                         "mbta-blue": "#003DA5",
                         "mbta-purple": "#80276C",
                         "mbta-yellow": "#FFC72C",
-                        "mbta-silver": "#6B7280",
+                        "mbta-silver": "#75787b",
                     },
                     fontFamily: {
-                        "display": ["Inter", "sans-serif"]
+                        "display": ["Inter", "sans-serif"],
+                        "mono": ["ui-monospace", "SFMono-Regular", "Menlo", "Monaco", "Consolas", "Liberation Mono", "Courier New", "monospace"]
                     },
-                    borderRadius: {"DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px"},
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
                 },
             },
         }
     </script>
     <style>
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        @keyframes radar-ping {
+            0% { transform: scale(0.8); opacity: 0.8; }
+            75%, 100% { transform: scale(2); opacity: 0; }
+        }
+        .animate-radar { animation: radar-ping 2s cubic-bezier(0, 0, 0.2, 1) infinite; }
+        .tabular-nums { font-variant-numeric: tabular-nums; }
     </style>
 </head>
-<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-white font-display min-h-screen flex flex-col overflow-x-hidden">
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-white font-display antialiased selection:bg-primary selection:text-black overflow-y-scroll">
 
-<!-- Top Navigation -->
-<header class="flex items-center justify-between whitespace-nowrap border-b border-solid border-slate-200 dark:border-[#233648] px-6 py-4 bg-white dark:bg-[#111a22] sticky top-0 z-50">
-    <div class="flex items-center gap-4">
-
-        <h2 class="text-slate-900 dark:text-white text-xl font-bold leading-tight tracking-tight text-center">TTimes</h2>
-    </div>
-    <div class="flex items-center gap-4">
-        <button id="themeToggle" class="bg-slate-200 dark:bg-[#233648] p-2 rounded-full hover:bg-slate-300 dark:hover:bg-[#2f455a] transition-colors">
-            <span class="material-symbols-outlined text-slate-700 dark:text-white dark:hidden">dark_mode</span>
-            <span class="material-symbols-outlined text-slate-700 dark:text-white hidden dark:block">light_mode</span>
-        </button>
-    </div>
-</header>
-
-<div class="flex flex-1 justify-center p-4 md:p-8">
-    <div class="flex flex-col max-w-[1280px] w-full flex-1 gap-8">
-        
-        <!-- Page Heading + Context -->
-        <div class="flex flex-wrap justify-between items-end gap-4 border-b border-slate-200 dark:border-[#233648]/50 pb-6">
-            <div class="flex flex-col gap-2">
-                <h1 id="greeting" class="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white tracking-tight">Hello, Commuter</h1>
-                <div class="flex items-center gap-2 text-slate-500 dark:text-[#92adc9] text-sm font-medium">
-                    <span class="material-symbols-outlined text-lg">location_on</span>
-                    <span id="locationText">Detecting location...</span>
-                </div>
+<div class="relative flex min-h-screen w-full flex-col group/design-root overflow-x-hidden">
+    
+    <!-- Header -->
+    <header class="sticky top-0 z-50 flex items-center justify-between whitespace-nowrap border-b border-solid border-gray-200 dark:border-neutral-700 bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-md px-6 py-3">
+        <div class="flex items-center gap-3">
+            <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-black">
+                <span class="material-symbols-outlined text-[20px]">train</span>
             </div>
-            <!-- Pace Toggle -->
-            <div class="bg-slate-200 dark:bg-[#233648] p-1 rounded-full flex h-12 items-center">
-                <label class="cursor-pointer px-6 py-2 rounded-full flex items-center gap-2 transition-all has-[:checked]:bg-white dark:has-[:checked]:bg-[#111a22] has-[:checked]:shadow-sm has-[:checked]:text-primary text-slate-500 dark:text-[#92adc9]">
-                    <span class="material-symbols-outlined text-xl">directions_walk</span>
-                    <span class="font-semibold text-sm">Walk</span>
-                    <input checked id="paceWalk" class="hidden" name="pace" type="radio" value="walk"/>
-                </label>
-                <label class="cursor-pointer px-6 py-2 rounded-full flex items-center gap-2 transition-all has-[:checked]:bg-white dark:has-[:checked]:bg-[#111a22] has-[:checked]:shadow-sm has-[:checked]:text-primary text-slate-500 dark:text-[#92adc9]">
-                    <span class="material-symbols-outlined text-xl">directions_run</span>
-                    <span class="font-semibold text-sm">Run</span>
-                    <input id="paceRun" class="hidden" name="pace" type="radio" value="run"/>
-                </label>
-            </div>
+            <h2 class="text-slate-900 dark:text-white text-lg font-bold leading-tight tracking-tight">TTimes</h2>
         </div>
-
-        <!-- Loading State -->
-        <div id="loading" class="flex flex-col items-center justify-center py-20 gap-4">
-            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-            <p class="text-slate-500 dark:text-[#92adc9]">Finding nearby transit options...</p>
-        </div>
-
-        <!-- Error State -->
-        <div id="error" class="hidden flex flex-col items-center justify-center py-20 gap-4 text-center">
-            <span class="material-symbols-outlined text-6xl text-red-500">error</span>
-            <p id="errorText" class="text-slate-500 dark:text-[#92adc9]">Something went wrong</p>
-            <button onclick="fetchCommuteData()" class="bg-primary text-white px-6 py-2 rounded-full font-medium hover:bg-blue-600 transition-colors">
-                Try Again
+        <div class="flex gap-2">
+            <button onclick="fetchCommuteData()" class="flex h-10 w-10 cursor-pointer items-center justify-center rounded-lg bg-white dark:bg-neutral-800 text-slate-700 dark:text-white hover:bg-gray-100 dark:hover:bg-neutral-700 transition-colors border border-gray-200 dark:border-transparent">
+                <span class="material-symbols-outlined">refresh</span>
+            </button>
+            <button id="themeToggle" class="flex h-10 w-10 cursor-pointer items-center justify-center rounded-lg bg-white dark:bg-neutral-800 text-slate-700 dark:text-white hover:bg-gray-100 dark:hover:bg-neutral-700 transition-colors border border-gray-200 dark:border-transparent">
+                <span class="material-symbols-outlined dark:hidden">dark_mode</span>
+                <span class="material-symbols-outlined hidden dark:block">light_mode</span>
+            </button>
+            <button onclick="showAbout()" class="flex h-10 w-10 cursor-pointer items-center justify-center rounded-lg bg-white dark:bg-neutral-800 text-slate-700 dark:text-white hover:bg-gray-100 dark:hover:bg-neutral-700 transition-colors border border-gray-200 dark:border-transparent">
+                <span class="material-symbols-outlined">info</span>
             </button>
         </div>
+    </header>
 
-        <!-- Pinned Routes Carousel -->
-        <section id="pinnedSection" class="hidden flex-col gap-4">
-            <div class="flex items-center justify-between">
-                <h3 class="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                    <span class="material-symbols-outlined text-primary">push_pin</span>
-                    Pinned Routes
-                </h3>
-            </div>
-            <div id="pinnedRoutes" class="flex overflow-x-auto gap-4 pb-4 no-scrollbar snap-x">
-            </div>
-        </section>
-
-        <!-- Main Dashboard Grid -->
-        <div id="mainGrid" class="hidden grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <!-- Column 1: Immediate Proximity -->
-            <div class="flex flex-col gap-4">
-                <div class="flex items-center gap-2 pb-2 border-b border-slate-200 dark:border-[#233648]">
-                    <span class="material-symbols-outlined text-mbta-green">timer</span>
-                    <h4 class="font-bold text-slate-900 dark:text-white">Immediate (&lt; 5m walk)</h4>
+    <!-- Loading View -->
+    <div id="loadingView" class="flex-1 flex flex-col items-center justify-center p-4 min-h-[calc(100vh-64px)]">
+        <div class="w-full max-w-[480px] flex flex-col items-center bg-white dark:bg-card-dark rounded-xl shadow-xl dark:shadow-2xl border border-slate-100 dark:border-gray-800 p-8 md:p-12 transition-all">
+            <div class="relative flex items-center justify-center mb-8">
+                <div class="absolute h-24 w-24 rounded-full bg-primary/20 animate-radar"></div>
+                <div class="absolute h-24 w-24 rounded-full bg-primary/10 animate-radar" style="animation-delay: 0.5s;"></div>
+                <div class="relative z-10 flex items-center justify-center h-16 w-16 rounded-full bg-primary/10 dark:bg-primary/20 text-primary">
+                    <span class="material-symbols-outlined text-[32px] animate-pulse">my_location</span>
                 </div>
-                <div id="immediateCards" class="flex flex-col gap-4"></div>
             </div>
-
-            <!-- Column 2: Nearby Proximity -->
-            <div class="flex flex-col gap-4">
-                <div class="flex items-center gap-2 pb-2 border-b border-slate-200 dark:border-[#233648]">
-                    <span class="material-symbols-outlined text-primary">directions_walk</span>
-                    <h4 class="font-bold text-slate-900 dark:text-white">Nearby (5-10m walk)</h4>
-                </div>
-                <div id="nearbyCards" class="flex flex-col gap-4"></div>
+            <div class="flex flex-col items-center gap-3 text-center mb-8">
+                <h1 class="text-xl md:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+                    Locating nearby stops...
+                </h1>
+                <p class="text-slate-500 dark:text-slate-400 text-sm md:text-base leading-relaxed max-w-xs">
+                    We need your location to calculate walking time to the nearest station.
+                </p>
             </div>
-
-            <!-- Column 3: Further Proximity -->
-            <div class="flex flex-col gap-4">
-                <div class="flex items-center gap-2 pb-2 border-b border-slate-200 dark:border-[#233648]">
-                    <span class="material-symbols-outlined text-slate-400">directions_bike</span>
-                    <h4 class="font-bold text-slate-900 dark:text-white">Further (10m+ walk)</h4>
-                </div>
-                <div id="furtherCards" class="flex flex-col gap-4"></div>
+            <div id="errorContainer" class="hidden flex-col items-center gap-4 w-full">
+                <p id="errorText" class="text-red-500 text-center text-sm"></p>
+                <button onclick="location.reload()" class="bg-primary text-black px-6 py-2 rounded-lg font-medium hover:bg-amber-400 transition-colors w-full">
+                    Retry
+                </button>
             </div>
         </div>
+    </div>
 
-        <!-- Empty State -->
-        <div id="emptyState" class="hidden flex flex-col items-center justify-center py-20 gap-4 text-center">
-            <span class="material-symbols-outlined text-6xl text-slate-300 dark:text-slate-600">train</span>
-            <p class="text-slate-500 dark:text-[#92adc9]">No upcoming transit options found nearby</p>
+    <!-- Dashboard View -->
+    <div id="dashboardView" class="hidden layout-container h-full grow flex-col">
+        <div class="px-4 md:px-8 lg:px-12 flex flex-1 justify-center py-6">
+            <div class="layout-content-container flex flex-col lg:flex-row gap-8 max-w-[1280px] flex-1 w-full">
+                
+                <!-- Left Column: Feed -->
+                <div class="flex flex-col flex-1 w-full gap-6 min-w-0">
+                    
+                    <!-- Location & Pace Toggle -->
+                    <div class="flex flex-col gap-4">
+                        <div class="flex flex-wrap justify-between items-end gap-3 px-1">
+                            <div class="flex flex-col gap-1">
+                                <h1 class="text-slate-900 dark:text-white tracking-tight text-[32px] font-bold leading-tight">Near <span id="locationHeader" class="bg-primary text-black px-2 py-0.5 rounded">You</span></h1>
+                                <div class="flex items-center gap-2 text-slate-600 dark:text-slate-400 text-sm font-medium">
+                                    <span class="material-symbols-outlined text-[18px]">my_location</span>
+                                    <span id="locationSubtext">Location detected</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Pace Toggle -->
+                        <div class="flex h-12 w-full items-center justify-center rounded-xl bg-gray-200 dark:bg-neutral-800 p-1">
+                            <label class="group flex cursor-pointer h-full grow items-center justify-center overflow-hidden rounded-lg px-2 has-[:checked]:bg-white dark:has-[:checked]:bg-background-dark has-[:checked]:shadow-sm has-[:checked]:text-primary dark:has-[:checked]:text-white text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white text-sm font-bold leading-normal transition-all">
+                                <span class="flex items-center gap-2">Walk <span class="material-symbols-outlined text-[18px]">directions_walk</span></span>
+                                <input checked class="invisible w-0 absolute" name="pace" type="radio" value="walk"/>
+                            </label>
+                            <label class="group flex cursor-pointer h-full grow items-center justify-center overflow-hidden rounded-lg px-2 has-[:checked]:bg-white dark:has-[:checked]:bg-background-dark has-[:checked]:shadow-sm has-[:checked]:text-primary dark:has-[:checked]:text-white text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white text-sm font-medium leading-normal transition-all">
+                                <span class="flex items-center gap-2">Run <span class="material-symbols-outlined text-[18px]">directions_run</span></span>
+                                <input class="invisible w-0 absolute" name="pace" type="radio" value="run"/>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Saved Commutes (Compact Chips) -->
+                    <div id="savedSection" class="hidden flex-col gap-3">
+                        <h2 class="text-slate-900 dark:text-white text-[20px] font-bold leading-tight px-1 flex items-center gap-2">
+                            Saved
+                            <span class="material-symbols-outlined text-primary text-[20px]">favorite</span>
+                        </h2>
+                        <div id="savedCards" class="flex flex-wrap gap-2 px-1">
+                        </div>
+                    </div>
+
+                    <!-- Immediate Section -->
+                    <div id="immediateSection" class="hidden flex-col gap-3">
+                        <h2 class="text-slate-900 dark:text-white text-[20px] font-bold leading-tight px-1 flex items-center gap-2">
+                            Immediate 
+                            <span class="text-xs font-normal px-2 py-0.5 rounded-full bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400">&lt; 5 min walk</span>
+                        </h2>
+                        <div id="immediateCards" class="flex flex-col gap-3">
+                        </div>
+                    </div>
+
+                    <!-- Nearby Section -->
+                    <div id="nearbySection" class="hidden flex-col gap-3">
+                        <h2 class="text-slate-900 dark:text-white text-[20px] font-bold leading-tight px-1 flex items-center gap-2">
+                            Nearby 
+                            <span class="text-xs font-normal px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400">5-10 min walk</span>
+                        </h2>
+                        <div id="nearbyCards" class="flex flex-col gap-3">
+                        </div>
+                    </div>
+
+                    <!-- Further Section -->
+                    <div id="furtherSection" class="hidden flex-col gap-3">
+                        <h2 class="text-slate-900 dark:text-white text-[20px] font-bold leading-tight px-1 flex items-center gap-2">
+                            Further 
+                            <span class="text-xs font-normal px-2 py-0.5 rounded-full bg-slate-100 dark:bg-neutral-800 text-slate-600 dark:text-slate-400">&gt; 10 min walk</span>
+                        </h2>
+                        <div id="furtherCards" class="flex flex-col gap-3">
+                        </div>
+                    </div>
+
+                    <!-- Empty State -->
+                    <div id="emptyState" class="hidden flex-col items-center justify-center py-20 gap-4 text-center">
+                        <span class="material-symbols-outlined text-6xl text-slate-300 dark:text-slate-600">train</span>
+                        <p class="text-slate-500 dark:text-slate-400">No upcoming transit options found nearby</p>
+                    </div>
+
+                    <!-- Footer -->
+                    <footer class="mt-8 pt-6 border-t border-gray-100 dark:border-gray-800 flex justify-between items-center text-xs text-slate-400 dark:text-slate-600">
+                        <p>Data from MBTA API</p>
+                        <button onclick="showAbout()" class="hover:text-primary transition-colors underline">About</button>
+                        <p id="lastUpdated">Updated just now</p>
+                    </footer>
+                </div>
+
+                <!-- Right Column: T Status (Desktop) -->
+                <div class="hidden lg:flex flex-col w-[360px] xl:w-[400px] shrink-0 gap-6 pt-[72px]">
+                    
+                    <!-- T Status Card -->
+                    <div class="flex flex-col p-6 rounded-2xl bg-white dark:bg-card-dark border border-gray-100 dark:border-gray-800 shadow-sm">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">T Status</h3>
+                            <span class="text-xs font-bold text-green-600 bg-green-100 dark:bg-green-900/40 dark:text-green-300 px-2 py-0.5 rounded">LIVE</span>
+                        </div>
+                        <div class="flex flex-col gap-3">
+                            <div class="flex items-center justify-between p-2 hover:bg-gray-50 dark:hover:bg-white/5 rounded-lg transition-colors cursor-pointer group">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-1.5 h-8 rounded-full bg-[#DA291C] group-hover:scale-y-110 transition-transform"></div>
+                                    <span class="font-bold text-slate-700 dark:text-slate-200">Red Line</span>
+                                </div>
+                                <span class="text-[10px] font-bold text-green-600 bg-green-100 dark:bg-green-900/40 dark:text-green-300 px-2 py-1 rounded uppercase tracking-wide">Normal</span>
+                            </div>
+                            <div class="flex items-center justify-between p-2 hover:bg-gray-50 dark:hover:bg-white/5 rounded-lg transition-colors cursor-pointer group">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-1.5 h-8 rounded-full bg-[#ED8B00] group-hover:scale-y-110 transition-transform"></div>
+                                    <span class="font-bold text-slate-700 dark:text-slate-200">Orange Line</span>
+                                </div>
+                                <span class="text-[10px] font-bold text-green-600 bg-green-100 dark:bg-green-900/40 dark:text-green-300 px-2 py-1 rounded uppercase tracking-wide">Normal</span>
+                            </div>
+                            <div class="flex items-center justify-between p-2 hover:bg-gray-50 dark:hover:bg-white/5 rounded-lg transition-colors cursor-pointer group">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-1.5 h-8 rounded-full bg-[#003DA5] group-hover:scale-y-110 transition-transform"></div>
+                                    <span class="font-bold text-slate-700 dark:text-slate-200">Blue Line</span>
+                                </div>
+                                <span class="text-[10px] font-bold text-green-600 bg-green-100 dark:bg-green-900/40 dark:text-green-300 px-2 py-1 rounded uppercase tracking-wide">Normal</span>
+                            </div>
+                            <div class="flex items-center justify-between p-2 hover:bg-gray-50 dark:hover:bg-white/5 rounded-lg transition-colors cursor-pointer group">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-1.5 h-8 rounded-full bg-[#00843D] group-hover:scale-y-110 transition-transform"></div>
+                                    <span class="font-bold text-slate-700 dark:text-slate-200">Green Line</span>
+                                </div>
+                                <span class="text-[10px] font-bold text-green-600 bg-green-100 dark:bg-green-900/40 dark:text-green-300 px-2 py-1 rounded uppercase tracking-wide">Normal</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Info Box -->
+                    <div class="p-4 rounded-xl bg-primary/10 border border-primary/20">
+                        <div class="flex gap-3">
+                            <span class="material-symbols-outlined text-primary shrink-0">info</span>
+                            <p class="text-sm text-slate-700 dark:text-slate-300">
+                                Real-time predictions from MBTA V3 API. Walking times via OpenRouteService.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
         </div>
-
-        <!-- Footer -->
-        <footer class="mt-8 mb-4 flex justify-between items-center text-xs text-slate-400 dark:text-slate-600">
-            <p>Data provided by MBTA Real-time API</p>
-            <button onclick="showAbout()" class="hover:text-primary transition-colors underline">About</button>
-            <p id="lastUpdated">Last updated: --</p>
-        </footer>
     </div>
 </div>
 
 <!-- Detail Modal -->
-<div id="detailModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4">
-    <div class="relative w-full max-w-[420px] bg-background-light dark:bg-background-dark rounded-lg shadow-2xl flex flex-col max-h-[95vh] overflow-hidden ring-1 ring-white/10">
-        <!-- Header Actions -->
-        <div class="flex justify-between items-center px-6 pt-6 pb-2">
-            <div class="text-sm font-medium text-slate-500 dark:text-slate-400 tracking-wider uppercase">Details</div>
-            <button onclick="closeModal()" class="group p-2 -mr-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors rounded-full hover:bg-slate-200 dark:hover:bg-white/10">
+<div id="detailModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+    <div class="absolute inset-0 z-0 bg-black/60 backdrop-blur-sm" onclick="closeModal()"></div>
+    <div class="relative z-10 w-full max-w-[480px] flex flex-col bg-white dark:bg-card-dark shadow-2xl rounded-2xl overflow-hidden border border-slate-200 dark:border-gray-800">
+        <header class="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-gray-800">
+            <div class="flex items-center gap-3">
+                <div id="modalLineIcon" class="flex items-center justify-center size-8 rounded-full bg-gray-500 text-white shadow-sm font-bold text-sm">
+                </div>
+                <div>
+                    <h2 id="modalLineName" class="text-sm font-semibold leading-none text-slate-900 dark:text-white">Route</h2>
+                    <span class="text-xs text-slate-500 dark:text-slate-400">MBTA</span>
+                </div>
+            </div>
+            <button onclick="closeModal()" class="flex items-center justify-center size-8 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 transition-colors">
                 <span class="material-symbols-outlined">close</span>
             </button>
+        </header>
+        <div class="flex flex-col p-6 items-center">
+            <div class="text-center mb-8 w-full">
+                <h1 id="modalStopName" class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white mb-1">Stop Name</h1>
+                <div class="flex items-center justify-center gap-2 text-primary dark:text-amber-400">
+                    <span class="material-symbols-outlined text-lg">arrow_forward</span>
+                    <span id="modalHeadsign" class="text-base font-medium">To Destination</span>
+                </div>
+            </div>
+            <div class="w-full bg-slate-50 dark:bg-neutral-800/50 rounded-xl p-6 mb-6 shadow-inner border border-slate-100 dark:border-gray-800">
+                <div class="flex items-center justify-center gap-2 mb-2">
+                    <span class="relative flex h-3 w-3">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                        <span id="modalStatusDot" class="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                    </span>
+                    <p id="modalStatusText" class="text-xs font-bold uppercase tracking-wider text-green-600 dark:text-green-400">On Time</p>
+                </div>
+                <div class="flex justify-center items-end gap-2 text-slate-900 dark:text-white tabular-nums">
+                    <div class="flex flex-col items-center">
+                        <span id="modalMins" class="text-7xl font-bold tracking-tighter leading-none">--</span>
+                        <span class="text-xs font-medium text-slate-400 mt-2">MIN</span>
+                    </div>
+                    <span class="text-5xl font-bold opacity-40 mb-8">:</span>
+                    <div class="flex flex-col items-center">
+                        <span id="modalSecs" class="text-7xl font-bold tracking-tighter leading-none text-primary">--</span>
+                        <span class="text-xs font-medium text-slate-400 mt-2">SEC</span>
+                    </div>
+                </div>
+                <p class="text-center text-sm text-slate-500 dark:text-slate-400 mt-6 pt-4 border-t border-slate-200 dark:border-gray-700 border-dashed">
+                    Time until you should leave
+                </p>
+            </div>
+            <div class="flex items-center gap-6 text-sm text-slate-600 dark:text-slate-400 mb-8 bg-slate-50 dark:bg-neutral-800/50 px-4 py-2 rounded-full border border-slate-100 dark:border-gray-700">
+                <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[18px]">directions_walk</span>
+                    <span id="modalWalkTime">6 min walk</span>
+                </div>
+                <div class="w-px h-3 bg-slate-300 dark:bg-neutral-600"></div>
+                <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[18px]">schedule</span>
+                    <span id="modalDepTime">Departs --:--</span>
+                </div>
+            </div>
+            <div class="w-full space-y-3">
+                <button id="modalNavBtn" class="flex w-full cursor-pointer items-center justify-center rounded-xl h-14 bg-primary hover:bg-amber-400 text-black gap-3 text-base font-bold transition-all shadow-lg shadow-primary/20 group">
+                    <span class="material-symbols-outlined group-hover:scale-110 transition-transform">near_me</span>
+                    <span>Navigate to Stop</span>
+                </button>
+                <button id="modalTogglePinBtn" class="flex w-full cursor-pointer items-center justify-center rounded-xl h-12 bg-transparent hover:bg-slate-100 dark:hover:bg-white/5 text-slate-600 dark:text-slate-300 gap-2 text-sm font-semibold transition-colors">
+                    <span class="material-symbols-outlined text-[18px]">favorite</span>
+                    <span>Save to Favorites</span>
+                </button>
+            </div>
         </div>
-        <!-- Scrollable Content Area -->
-        <div id="modalBody" class="overflow-y-auto flex-1 px-6 pb-8"></div>
     </div>
 </div>
 
 <!-- About Modal -->
-<div id="aboutModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4">
-    <div class="relative w-full max-w-[480px] bg-background-light dark:bg-background-dark rounded-lg shadow-2xl flex flex-col max-h-[95vh] overflow-hidden ring-1 ring-white/10">
-        <!-- Header -->
-        <div class="flex justify-between items-center px-6 pt-6 pb-2">
-            <div class="text-sm font-medium text-slate-500 dark:text-slate-400 tracking-wider uppercase">About</div>
-            <button onclick="closeAbout()" class="group p-2 -mr-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors rounded-full hover:bg-slate-200 dark:hover:bg-white/10">
+<div id="aboutModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+    <div class="absolute inset-0 z-0 bg-black/60 backdrop-blur-sm" onclick="closeAbout()"></div>
+    <div class="relative z-10 w-full max-w-[480px] flex flex-col bg-white dark:bg-card-dark shadow-2xl rounded-2xl overflow-hidden border border-slate-200 dark:border-gray-800 max-h-[90vh]">
+        <header class="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-gray-800">
+            <div class="text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">About</div>
+            <button onclick="closeAbout()" class="flex items-center justify-center size-8 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 transition-colors">
                 <span class="material-symbols-outlined">close</span>
             </button>
-        </div>
-        <!-- Content -->
-        <div class="overflow-y-auto flex-1 px-6 pb-8">
+        </header>
+        <div class="overflow-y-auto flex-1 px-6 py-6">
             <div class="flex flex-col items-center py-4">
-                <h1 class="text-slate-900 dark:text-white text-4xl font-black tracking-tight">TTimes</h1>
+                <div class="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary text-black mb-4">
+                    <span class="material-symbols-outlined text-[36px]">train</span>
+                </div>
+                <h1 class="text-slate-900 dark:text-white text-3xl font-bold tracking-tight">TTimes</h1>
                 <p class="text-slate-500 dark:text-slate-400 text-sm mt-2">Boston Transit Departure Assistant</p>
             </div>
 
-            <!-- APIs Used -->
-            <div class="bg-white dark:bg-[#1b2530] rounded-lg p-5 mt-4 border border-slate-200 dark:border-slate-700/50">
+            <div class="bg-slate-50 dark:bg-neutral-800/50 rounded-xl p-5 mt-4 border border-slate-100 dark:border-gray-800">
                 <h3 class="text-slate-900 dark:text-white font-bold mb-3 flex items-center gap-2">
                     <span class="material-symbols-outlined text-primary">api</span>
                     Powered By
@@ -204,32 +354,30 @@
                 </ul>
             </div>
 
-            <!-- How it works -->
-            <div class="bg-white dark:bg-[#1b2530] rounded-lg p-5 mt-4 border border-slate-200 dark:border-slate-700/50">
+            <div class="bg-slate-50 dark:bg-neutral-800/50 rounded-xl p-5 mt-4 border border-slate-100 dark:border-gray-800">
                 <h3 class="text-slate-900 dark:text-white font-bold mb-3 flex items-center gap-2">
                     <span class="material-symbols-outlined text-mbta-orange">calculate</span>
                     How "Time to Leave" Works
                 </h3>
                 <div class="space-y-3 text-sm">
                     <div class="flex items-center gap-3 text-slate-600 dark:text-slate-300">
-                        <div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">X</div>
+                        <div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold shrink-0">X</div>
                         <span>Next departure is in <strong>X</strong> minutes</span>
                     </div>
                     <div class="flex items-center gap-3 text-slate-600 dark:text-slate-300">
-                        <div class="w-8 h-8 rounded-full bg-mbta-green/10 flex items-center justify-center text-mbta-green font-bold">Y</div>
+                        <div class="w-8 h-8 rounded-full bg-mbta-green/10 flex items-center justify-center text-mbta-green font-bold shrink-0">Y</div>
                         <span>It takes <strong>Y</strong> minutes to walk there</span>
                     </div>
-                    <div class="border-t border-slate-200 dark:border-slate-700 pt-3 mt-3">
+                    <div class="border-t border-slate-200 dark:border-gray-700 pt-3 mt-3">
                         <div class="flex items-center gap-3 text-slate-900 dark:text-white font-medium">
-                            <div class="w-8 h-8 rounded-full bg-mbta-red/10 flex items-center justify-center text-mbta-red font-bold">=</div>
+                            <div class="w-8 h-8 rounded-full bg-mbta-red/10 flex items-center justify-center text-mbta-red font-bold shrink-0">=</div>
                             <span>Leave in <strong>X − Y</strong> minutes</span>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Credits -->
-            <div class="bg-white dark:bg-[#1b2530] rounded-lg p-5 mt-4 border border-slate-200 dark:border-slate-700/50">
+            <div class="bg-slate-50 dark:bg-neutral-800/50 rounded-xl p-5 mt-4 border border-slate-100 dark:border-gray-800">
                 <h3 class="text-slate-900 dark:text-white font-bold mb-3 flex items-center gap-2">
                     <span class="material-symbols-outlined text-mbta-purple">favorite</span>
                     Credits
@@ -240,18 +388,12 @@
                 </p>
             </div>
 
-            <!-- Close button -->
-            <button onclick="closeAbout()" class="w-full mt-6 bg-primary hover:bg-blue-600 text-white font-bold py-3 rounded-full transition-colors">
+            <button onclick="closeAbout()" class="w-full mt-6 bg-primary hover:bg-amber-400 text-black font-bold py-3 rounded-xl transition-colors">
                 Got it!
             </button>
         </div>
     </div>
 </div>
-
-<!-- FAB Refresh -->
-<button onclick="fetchCommuteData()" class="fixed bottom-6 right-6 w-14 h-14 bg-primary text-white rounded-full shadow-2xl flex items-center justify-center hover:bg-blue-600 transition-all hover:scale-105 z-40">
-    <span class="material-symbols-outlined text-2xl">refresh</span>
-</button>
 
 <script src="/js/index.js"></script>
 </body>
