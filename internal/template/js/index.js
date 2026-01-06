@@ -46,13 +46,35 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-    navigator.geolocation.getCurrentPosition(async (position) => {
-        currentPosition = position;
-        await fetchCommuteData();
-        refreshInterval = setInterval(fetchCommuteData, REFRESH_INTERVAL_MS);
-    }, (err) => {
-        showError('Unable to retrieve your location: ' + err.message);
-    });
+    const geoOptions = {
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 60000
+    };
+
+    navigator.geolocation.getCurrentPosition(
+        async (position) => {
+            currentPosition = position;
+            await fetchCommuteData();
+            refreshInterval = setInterval(fetchCommuteData, REFRESH_INTERVAL_MS);
+        }, 
+        (err) => {
+            let errorMsg = 'Unable to retrieve your location.';
+            switch(err.code) {
+                case err.PERMISSION_DENIED:
+                    errorMsg = 'Location permission denied. Please enable location access in your browser settings.';
+                    break;
+                case err.POSITION_UNAVAILABLE:
+                    errorMsg = 'Location information unavailable. Please try again.';
+                    break;
+                case err.TIMEOUT:
+                    errorMsg = 'Location request timed out. Please try again.';
+                    break;
+            }
+            showError(errorMsg);
+        },
+        geoOptions
+    );
 });
 
 function showError(message) {
